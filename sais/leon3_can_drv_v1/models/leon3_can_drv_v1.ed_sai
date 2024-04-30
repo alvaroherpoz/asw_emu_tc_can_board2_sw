@@ -1,0 +1,12 @@
+
+
+/*
+ * SAI Model.
+*/ 
+
+
+sai leon3_can_drv{
+
+	uri := .leon3_can_drv;
+	version :=v1;
+};
