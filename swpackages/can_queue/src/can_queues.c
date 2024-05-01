@@ -76,12 +76,12 @@ void update_queued_elements(can_queue_t *p_queue, uint16_t num){
 	p_queue->queued_elements += num;
 }
 
-uint8_t queue_insert_elements_without_update_queued_elements(uint32_t can_msg_id, can_queue_t *p_queue, uint8_t *p_data, uint16_t DLC) {
+uint8_t queue_insert_elements_without_update_queued_elements(uint32_t can_msg_id, can_queue_t *p_queue, uint8_t *p_data, uint16_t DLC, uint8_t pos) {
 	uint8_t error = 1;
 
 	if (p_queue && (!queue_is_full(p_queue))) {
 		int i;
-		uint8_t next_tail = (p_queue->head + p_queue->queued_elements) % QUEUE_MAX_SIZE;
+		uint8_t next_tail = (p_queue->head + p_queue->queued_elements + pos) % QUEUE_MAX_SIZE;
 
 		//Guardamos el ID que son 29 bits
 		p_queue->data[next_tail+1].id[0] = (can_msg_id >> 21) & 0xFF;
@@ -91,7 +91,7 @@ uint8_t queue_insert_elements_without_update_queued_elements(uint32_t can_msg_id
 
 		//Guardamos los datos del mensaje
 		for (i=0; i < DLC; i++){
-			p_queue->data[next_tail+1].msg[i] = p_data[i];
+			p_queue->data[next_tail+1].msg[i] = p_data[i+8*pos];
 		}
 		//Guardamos el tamaño del mensaje en bytes
 		p_queue->data[next_tail+1].DLC  = DLC;

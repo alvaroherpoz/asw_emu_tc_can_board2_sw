@@ -149,7 +149,7 @@ int32_t pi_free_can_drv_send_message(uint32_t ID, uint16_t DLC, uint8_t Msg[], v
 				DLC_msg = 8; //8 bytes de DLC
 
 				queue_insert_elements_without_update_queued_elements(ID_msg,
-						&tx_prio_queues[priority], Msg, DLC_msg);
+						&tx_prio_queues[priority], &Msg, DLC_msg, num_msg_queued);
 
 				num_msg_queued += 1;
 
@@ -161,7 +161,7 @@ int32_t pi_free_can_drv_send_message(uint32_t ID, uint16_t DLC, uint8_t Msg[], v
 				ID_msg = aux_ID | 1 << 28 | 1 << 23; //Mensajes intermedios
 
 				queue_insert_elements_without_update_queued_elements(ID_msg,
-						&tx_prio_queues[priority], Msg, DLC_msg);
+						&tx_prio_queues[priority], &Msg, DLC_msg);
 
 				num_msg_queued += 1;
 
@@ -171,7 +171,7 @@ int32_t pi_free_can_drv_send_message(uint32_t ID, uint16_t DLC, uint8_t Msg[], v
 			ID_msg = aux_ID | flag << 24 | pending_Bytes << 25; // Ultimo mensaje
 
 			queue_insert_elements_without_update_queued_elements(ID_msg,
-					&tx_prio_queues[priority], Msg, pending_Bytes);
+					&tx_prio_queues[priority], &Msg, pending_Bytes);
 
 			num_msg_queued += 1;
 

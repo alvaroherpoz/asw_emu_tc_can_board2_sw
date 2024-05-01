@@ -44,7 +44,7 @@ uint8_t queue_insert_msg_completed_element(rx_msg_completed_queue_t *p_queue, ui
 uint8_t queue_extract_msg_completed_element(rx_msg_completed_queue_t *p_queue, uint8_t *p_data);
 
 void update_queued_elements(can_queue_t *p_queue, uint16_t num);
-uint8_t queue_insert_elements_without_update_queued_elements(uint32_t can_msg_id, can_queue_t *p_queue, uint8_t *p_data, uint16_t num_of_bytes);
+uint8_t queue_insert_elements_without_update_queued_elements(uint32_t can_msg_id, can_queue_t *p_queue, uint8_t *p_data, uint16_t num_of_bytes, uint8_t pos);
 
 uint8_t queue_extract_without_update_element(msg_can_t *can_msg, can_queue_t *p_queue, uint16_t pos);
 void update_dequeued_elements(can_queue_t *p_queue, uint16_t num);
