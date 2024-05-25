@@ -69,7 +69,7 @@ struct CAN_regs
 struct CAN_regs * pLEON3_CAN_REGS= (struct CAN_regs *) 0xFFFC0000;
 
 
-void leon3_can_config_prologue(board_t placa)
+void leon3_occan_drv_config_prologue(board_t placa)
 {
 	pLEON3_CAN_REGS->Mode |=(1<<0);//Enter Reset Mode
 	pLEON3_CAN_REGS->Mode &=~(0xE);//Dual filter and disabled another mode
@@ -100,57 +100,81 @@ void leon3_can_config_prologue(board_t placa)
 	pLEON3_CAN_REGS->Interrupt_Enable &= ~(0xEF); //Disable another interrupt
 }
 
-uint8_t leon3_can_get_irq_status(void){
+uint8_t leon3_occan_drv_get_irq_status(void){
 	return (pLEON3_CAN_REGS->Interrupt);
 }
 
-void leon3_can_tx_irq_enable(void){
+void leon3_occan_drv_tx_irq_enable(void){
 	pLEON3_CAN_REGS->Interrupt_Enable |= (1<<1);  // (1<<1) CAN TX interrupt enable -> bit 1
 }
 
-void leon3_can_tx_irq_disable(void){
+void leon3_occan_tx_irq_disable(void){
 	pLEON3_CAN_REGS->Interrupt_Enable &= (0xED);  // (1<<1) CAN TX interrupt disable
 }
 
-void leon3_can_irq_mask(void){
+void leon3_occan_drv_irq_mask(void){
 	leon3_mask_irq(CAN_IRQ_LVL);
 }
 
-void leon3_can_irq_unmask(void){
+void leon3_occan_drv_irq_unmask(void){
 	leon3_unmask_irq(CAN_IRQ_LVL);
 }
 
-void leon3_can_rx_irq_enable(void){
+void leon3_occan_drv_rx_irq_enable(void){
 	pLEON3_CAN_REGS->Interrupt_Enable |= 1; // CAN RX interrupt enable -> bit 0
 }
 
-void leon3_can_rx_irq_disable(void){
+void leon3_occan_drv_rx_irq_disable(void){
 	pLEON3_CAN_REGS->Interrupt_Enable &= (0xEE);  // (1<<1) CAN RX interrupt disable
 }
 
-void leon3_can_config_epilogue(void){
+void leon3_occan_drv_config_epilogue(void){
 	pLEON3_CAN_REGS->Mode &= ~(1<<0);//Operating mode
 	pLEON3_CAN_REGS->Command |=(1<<2)|(1<<3);//Free received buffer for new reception and clear OV bit
 }
 
-void leon3_can_clear_overrun(void){
+void leon3_occan_drv_command_clear_overrun(void){
 	pLEON3_CAN_REGS->Command |=(1<<3);//clear OV bit
 }
 
-void leon3_can_abort_transmision(void){
+void leon3_occan_drv_command_abort_transmision(void){
 	pLEON3_CAN_REGS->Command |= (1<<1);//abort transmision bit
 }
 
-uint8_t leon3_can_status_transmitting_msg(void){
-	return ((pLEON3_CAN_REGS->Status >> 5) & 0x01);//transmitting msg bit
+uint8_t leon3_occan_drv_status_transmitting_msg(void){
+	return (((pLEON3_CAN_REGS->Status >> 5) & 0x01) == 1);//transmitting msg bit
 }
 
-uint8_t leon3_can_status_last_msg_transferred(void){
-	return ((pLEON3_CAN_REGS->Status >> 3) & 0x01);//last msg successfullyt ransferred
+uint8_t leon3_occan_drv_status_is_free_tx_buffer(void){
+	return (((pLEON3_CAN_REGS->Status >> 2) & 0x01) == 1);//can i write into tx buffer?
+}
+
+uint8_t leon3_occan_drv_status_has_rx_msg(void){
+	return (((pLEON3_CAN_REGS->Status >> 1) & 0x01) == 1);//can rx buffer contains msgs
+}
+
+uint8_t leon3_occan_drv_status_is_last_msg_transferred(void){
+	return ((pLEON3_CAN_REGS->Status >> 3) & 0x01);//last msg successfully transferred
+}
+
+uint8_t leon3_occan_drv_interrupt_is_tx_interruption(void){
+	return ((pLEON3_CAN_REGS->Interrupt >> 1) & 0x01 == 1);//TX interrupt bit
+}
+
+uint8_t leon3_occan_drv_interrupt_is_rx_interruption(void){
+	return ((pLEON3_CAN_REGS->Interrupt) & 0x01 == 1);//RX interrupt bit
+}
+
+void leon3_occan_drv_command_free_receive_buffer(void){
+	pLEON3_CAN_REGS->Command |=(1<<2); ///Free receive buffer
+}
+
+void leon3_occan_drv_command_transmit(void){
+	pLEON3_CAN_REGS->Command |=(1<<0);//Transmit bit
 }
 
 
-uint8_t leon3_send_message(uint8_t ID[4], uint8_t RTR, uint8_t DLC, uint8_t data[8])
+uint8_t leon3_occan_drv_send_message(msg_can_t *can_msg)
 {
 	uint32_t write_timeout=0;
 	uint8_t i;
@@ -159,18 +183,18 @@ uint8_t leon3_send_message(uint8_t ID[4], uint8_t RTR, uint8_t DLC, uint8_t data
 	}
 	if(write_timeout < 0xAAAAA)//Bit set
 	{
-		if(DLC>8) DLC=8;//DLCmax=8
+		if(can_msg->DLC>8) can_msg->DLC=8;//DLCmax=8
 
-		pLEON3_CAN_REGS->Frame_Information = (1<<7) + ((RTR & 0x1)<<6) + (DLC & 0xF);//EFF+RTR+DLC
+		pLEON3_CAN_REGS->Frame_Information = (1<<7) + ((can_msg->RTR & 0x1)<<6) + (can_msg->DLC & 0xF);//EFF+RTR+DLC
 
-		pLEON3_CAN_REGS->ID[0] = ID[0];//Frame ID
-		pLEON3_CAN_REGS->ID[1] = ID[1];
-		pLEON3_CAN_REGS->ID[2] = ID[2];
-		pLEON3_CAN_REGS->ID[3] = ID[3];
+		pLEON3_CAN_REGS->ID[0] = can_msg->id[0];//Frame ID
+		pLEON3_CAN_REGS->ID[1] = can_msg->id[1];
+		pLEON3_CAN_REGS->ID[2] = can_msg->id[2];
+		pLEON3_CAN_REGS->ID[3] = can_msg->id[3];
 
-		for(i=0; i<DLC; i++)
+		for(i=0; i<can_msg->DLC; i++)
 		{
-			pLEON3_CAN_REGS->DATA[i]=data[i];//Frame DATA
+			pLEON3_CAN_REGS->DATA[i]=can_msg->msg[i];//Frame DATA
 		}
 		pLEON3_CAN_REGS->Command |=(1<<0);//Transmit
 	}
@@ -178,7 +202,7 @@ uint8_t leon3_send_message(uint8_t ID[4], uint8_t RTR, uint8_t DLC, uint8_t data
 }
 
 
-uint8_t leon3_get_message(msg_can_t *Msg){
+uint8_t leon3_occan_drv_get_message(msg_can_t *Msg){
 	uint32_t read_timeout=0, condition=0;
 		uint8_t i, FI;
 		do{

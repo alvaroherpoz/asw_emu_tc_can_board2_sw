@@ -38,7 +38,7 @@ uint8_t queue_is_empty(can_queue_t *p_queue);
 uint8_t queue_is_full_rx_msg_completed_queue(rx_msg_completed_queue_t *p_queue);
 uint8_t queue_is_empty_rx_msg_completed_queue(rx_msg_completed_queue_t *p_queue);
 
-uint8_t queue_insert_element(uint32_t can_msg_id, can_queue_t *p_queue, uint8_t *p_data, uint16_t DLC);
+uint8_t queue_insert_element(msg_can_t* can_msg, can_queue_t *p_queue);
 uint8_t queue_extract_element(msg_can_t *can_msg, can_queue_t *p_queue);
 uint8_t queue_insert_msg_completed_element(rx_msg_completed_queue_t *p_queue, uint8_t data);
 uint8_t queue_extract_msg_completed_element(rx_msg_completed_queue_t *p_queue, uint8_t *p_data);

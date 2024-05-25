@@ -27,10 +27,10 @@ void Unlock(){
 
 void edroom_can_drv_config(){
 
-	leon3_can_config_prologue(NEXYS);
-	leon3_can_rx_irq_enable();
-	leon3_can_tx_irq_enable();
-	leon3_can_config_epilogue();
+	leon3_occan_drv_config_prologue(NEXYS);
+	leon3_occan_drv_rx_irq_enable();
+	leon3_occan_drv_tx_irq_enable();
+	leon3_occan_drv_config_epilogue();
 	pi_free_can_drv_config();
 
 }

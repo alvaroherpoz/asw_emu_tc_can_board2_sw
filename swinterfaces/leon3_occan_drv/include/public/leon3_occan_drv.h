@@ -31,25 +31,31 @@ typedef enum {A3P, NEXYS} board_t;
 
 #define CAN_IRQ_LVL 13
 
-void leon3_can_config_prologue(board_t);
-void leon3_can_config_epilogue(void);
+void leon3_occan_drv_config_prologue(board_t);
+void leon3_occan_drv_config_epilogue(void);
 
 /*uint8_t leon3_canSendMessage(uint32_t ID, uint8_t RTR, uint8_t DLC, uint8_t *data);
 uint8_t leon3_canGetMessage(Can_Message_t *Msg);*/
 
-uint8_t leon3_send_message(uint8_t ID[4], uint8_t RTR, uint8_t DLC, uint8_t data[8]);
-uint8_t leon3_get_message(msg_can_t *Msg);
+uint8_t leon3_occan_drv_send_message(msg_can_t *can_msg);
+uint8_t leon3_occan_drv_get_message(msg_can_t *Msg);
 
-uint8_t leon3_can_get_irq_status(void);
-void leon3_can_clear_overrun(void);
-void leon3_can_irq_mask(void);
-void leon3_can_irq_unmask(void);
-void leon3_can_tx_irq_enable(void);
-void leon3_can_rx_irq_enable(void);
-void leon3_can_abort_transmision(void);
-void leon3_can_abort_transmision(void);
-uint8_t leon3_can_status_transmitting_msg(void);
-uint8_t leon3_can_status_last_msg_transferred(void);
+uint8_t leon3_occan_drv_get_irq_status(void);
+void leon3_occan_drv_command_clear_overrun(void);
+void leon3_occan_drv_irq_mask(void);
+void leon3_occan_drv_irq_unmask(void);
+void leon3_occan_drv_tx_irq_enable(void);
+void leon3_occan_drv_rx_irq_enable(void);
+void leon3_occan_drv_command_abort_transmision(void);
+uint8_t leon3_occan_drv_status_transmitting_msg(void);
+uint8_t leon3_occan_drv_status_is_last_msg_transferred(void);
+uint8_t leon3_occan_drv_status_is_free_tx_buffer(void);
+uint8_t leon3_occan_drv_status_has_rx_msg(void);
+uint8_t leon3_occan_drv_status_transmitting_msg(void);
+void leon3_occan_drv_command_free_receive_buffer(void);
+void leon3_occan_drv_command_transmit(void);
+uint8_t leon3_occan_drv_interrupt_is_tx_interruption(void);
+uint8_t leon3_occan_drv_interrupt_is_rx_interruption(void);
 #ifdef __cplusplus
 
 }

@@ -42,7 +42,10 @@ icuasw_mmesp_project.o icuasw_mmesp_project.o:  \
   /home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/swinterfaces/sc_channel_drv_iface_v1/include/public/sc_channel_drv_iface_v1.h \
   /home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/components/rcctm_channelctrl/include/public/rcctm_channelctrl_iface_v1.h \
   /home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/components/cchk_fdirmng/include/public/cchk_fdirmng_iface_v1.h \
-  /home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/components/ccbkgtcexec/include/public/ccbkgtcexec_iface_v1.h
+  /home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/components/ccbkgtcexec/include/public/ccbkgtcexec_iface_v1.h \
+  /home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/swinterfaces/pi_free_can_drv/include/public/pi_free_can_drv.h \
+  /home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/swinterfaces/can_queue/include/public/can_queues.h \
+  /home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/swinterfaces/leon3_occan_drv/include/public/leon3_occan_drv.h
 
 /home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/edroom_glue/include/public/edroom_glue.h:
 
@@ -129,3 +132,9 @@ icuasw_mmesp_project.o icuasw_mmesp_project.o:  \
 /home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/components/cchk_fdirmng/include/public/cchk_fdirmng_iface_v1.h:
 
 /home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/components/ccbkgtcexec/include/public/ccbkgtcexec_iface_v1.h:
+
+/home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/swinterfaces/pi_free_can_drv/include/public/pi_free_can_drv.h:
+
+/home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/swinterfaces/can_queue/include/public/can_queues.h:
+
+/home/atcsol/eclipse-workspace/asw_emu_tc_can_board2_sw/swinterfaces/leon3_occan_drv/include/public/leon3_occan_drv.h:

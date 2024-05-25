@@ -44,7 +44,7 @@ uint8_t queue_is_full_rx_msg_completed_queue(rx_msg_completed_queue_t *p_queue) 
 	return is_full;
 }
 
-uint8_t queue_insert_element(uint32_t can_msg_id, can_queue_t *p_queue, uint8_t *p_data, uint16_t DLC) {
+uint8_t queue_insert_element(msg_can_t* can_msg, can_queue_t *p_queue) {
 	uint8_t error = 1;
 
 		if (p_queue && (!queue_is_full(p_queue))) {
@@ -52,17 +52,17 @@ uint8_t queue_insert_element(uint32_t can_msg_id, can_queue_t *p_queue, uint8_t 
 			uint8_t next_tail = (p_queue->head + p_queue->queued_elements) % QUEUE_MAX_SIZE;
 
 			//Guardamos el ID que son 29 bits
-			p_queue->data[next_tail+1].id[0] = (can_msg_id >> 21) & 0xFF;
-			p_queue->data[next_tail+1].id[1] = (can_msg_id >> 13) & 0xFF;
-			p_queue->data[next_tail+1].id[2] = (can_msg_id >> 5) & 0xFF;
-			p_queue->data[next_tail+1].id[3] = ((can_msg_id & 0x1F) << 3);
+			p_queue->data[next_tail+1].id[0] = can_msg->id[0];
+			p_queue->data[next_tail+1].id[1] = can_msg->id[1];
+			p_queue->data[next_tail+1].id[2] = can_msg->id[2];
+			p_queue->data[next_tail+1].id[3] = can_msg->id[3];
 
 			//Guardamos los datos del mensaje
-			for (i=0; i < DLC; i++){
-				p_queue->data[next_tail+1].msg[i] = p_data[i];
+			for (i=0; i < can_msg->DLC; i++){
+				p_queue->data[next_tail+1].msg[i] = can_msg->msg[i];
 			}
 			//Guardamos el tamaño del mensaje en bytes
-			p_queue->data[next_tail+1].DLC  = DLC;
+			p_queue->data[next_tail+1].DLC  = can_msg->DLC;
 
 			p_queue->data[next_tail+1].RTR = 0;
 

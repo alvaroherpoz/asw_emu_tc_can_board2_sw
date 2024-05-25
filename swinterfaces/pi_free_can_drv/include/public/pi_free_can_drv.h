@@ -37,11 +37,13 @@ void pi_free_can_drv_config(void);
 
 int32_t pi_free_send_message(uint32_t ID, uint16_t DLC, uint8_t Msg[], void (pLock()), void (pUnlock()));
 
-int32_t pi_free_can_drv_read_message(uint8_t priority, uint16_t Mlength, uint8_t Msg[], uint16_t* DLC, uint32_t* ID, uint8_t flush, void (pLock()), void (pUnlock()));
+int32_t pi_free_can_drv_read_message(uint8_t priority, uint16_t Mlength, uint8_t* p_data, uint16_t* DLC, uint32_t* ID, uint8_t flush, void (pLock()), void (pUnlock()));
 
 uint32_t pi_free_get_canmsg_id(uint8_t* prio);
 
 uint16_t pi_free_rx_status(void);
+
+void pi_free_can_irq_handler(void);
 
 #ifdef __cplusplus
 

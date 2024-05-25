@@ -83,6 +83,7 @@ void GetMaxPrioMsgInfo(uint8_t* msgPrio, uint8_t* msgSenderCmp, uint8_t* msgSend
 Pr_IRQHandler_RetType	CEDROOMSystemCommSAP::RemoteCommIRQHandler(void)
 {
 	//IRQ Handler
+	pi_free_can_irq_handler();
 	
 	RemoteCommEventIRQ.Signal();
 	
@@ -118,6 +119,7 @@ Pr_TaskRV_t		CEDROOMSystemCommSAP::RemoteCommIRQBottomHalfTask(Pr_TaskP_t)
 			//*****************
 			//Handling CAN IRQ cector 0x1C
 
+//			TODO ¿Necesita sem????
 			GetMaxPrioMsgInfo(&msgPrio, &msgSenderCmp, &msgSenderCmpInterface, &msgSignal);
 
 			/* EL siguiente código se genera en función del identificador del sender remoto, que lo tenemos fijado en Config (más abajo)

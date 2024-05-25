@@ -13,6 +13,7 @@
 #include <public/rcctm_channelctrl_iface_v1.h>
 #include <public/cchk_fdirmng_iface_v1.h>
 #include <public/ccbkgtcexec_iface_v1.h>
+#include "public/pi_free_can_drv.h"
 // ***********************************************************************
 // class CEDROOMSystemMemory
 // ***********************************************************************
