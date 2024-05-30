@@ -62,7 +62,7 @@ CCHK_FDIRMng	* CEDROOMSystemCommSAP::mp_cchk_fdirmng=NULL;
 CCBKGTCExec	* CEDROOMSystemCommSAP::mp_ccbkgtcexec=NULL;
 
 //! Event for trigger the bottom half associated to the IRQ
-Pr_IRQEvent		CEDROOMSystemCommSAP::RemoteCommEventIRQ(0x1C);
+Pr_IRQEvent		CEDROOMSystemCommSAP::RemoteCommEventIRQ(0x1D);
 
 //!Binary Semaphore for signal the end of the bottom half of the IRQ
 Pr_SemaphoreBin CEDROOMSystemCommSAP::RemoteCommSemEndIRQ(0);
@@ -251,7 +251,7 @@ Pr_TaskRV_t		CEDROOMSystemCommSAP::RemoteCommIRQBottomHalfTask(Pr_TaskP_t)
 				}
 				break;
 			}
-			Pr_IRQManager::EnableIRQ(0x1C);
+			Pr_IRQManager::EnableIRQ(0x1D);
 			if (edroom_can_drv_pending_msg() != 0)
 				RemoteCommEventIRQ.Signal();
 		}else endTask = 1;
@@ -834,7 +834,7 @@ void CEDROOMSystemDeployment::Config(RICUASW   *p_ricuasw,
 	mp_rcctm_channelctrl=p_rcctm_channelctrl;
 	mp_cchk_fdirmng=p_cchk_fdirmng;
 	mp_ccbkgtcexec=p_ccbkgtcexec;
- 
+	edroom_can_drv_config();
 	systemCommSAP.SetComponents(	p_ricuasw,
 									p_rccepdmanager,
 									p_rcctm_channelctrl,
@@ -865,7 +865,7 @@ void CEDROOMSystemDeployment::Start(){
  
 	//Install CAN IRQ HANDLER, Vector 0x1C;
 
-	Pr_IRQManager::InstallIRQHandler(CEDROOMSystemCommSAP::RemoteCommIRQHandler, 1, 0x1C);
+	Pr_IRQManager::InstallIRQHandler(CEDROOMSystemCommSAP::RemoteCommIRQHandler, 1, 0x1D);
 
 	Pr_Task RemoteComm(CEDROOMSystemCommSAP::RemoteCommIRQBottomHalfTask, EDROOMprioURGENT, 1024*2);
 

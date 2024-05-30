@@ -8,7 +8,7 @@
 #ifndef CAN_QUEUES_H_
 #define CAN_QUEUES_H_
 
-#define QUEUE_MAX_SIZE 8
+#define QUEUE_MAX_SIZE 40
 #define NUM_NODES 8
 #define NUM_PRIORITIES 16
 

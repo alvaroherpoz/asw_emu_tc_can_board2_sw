@@ -18,6 +18,7 @@ dl_list_node next_tx_queue[17]; // El primer elemento es el que indica cual es l
 dl_list_node next_rx_queue[17]; // El primer elemento es el que indica cual es la cola con mas prioridad que hay para recibir, el resto contienen la cola siguiente con menor prioridad a recibir
 
 uint8_t currentPrio = 0xFF;
+uint8_t first_access = 1;
 void pi_free_can_drv_config(void) {
 	int i;
 	//Inicializamos la lista doblemente enlazada de "siguientes colas", el primer elemento corresponderá siempre a la cola con mayor prioridad
@@ -365,35 +366,6 @@ uint16_t pi_free_rx_status() {
 	return rx_status;
 }
 
-/*
- Los pasos para el envío de un mensaje son los siguientes:
- 1. LEON3 accede a PDMCAN para comprobar el espacio disponible en el buffer que va a
- utilizar.
- 2. LEON3 accede a Memory Controller para escribir en la RAM, en las pilas asociadas a
- PDMCAN el mensaje a enviar.
- 3. LEON3 informa a PDMCAN del último puntero donde se ha introducido información.
- 4. PDMCAN accede a Memory Controller para extraer en grupos de hasta 12 bytes (8 bytes de
- dato más 29 bits de identificador del mensaje) el mensaje a enviar. En caso de existir más
- de un buffer con mensajes pendientes de envío, se atenderá al buffer de mayor prioridad.
- 5. PDMCAN accede a Core CAN_OC para gestionar el envío del mensaje por bus CAN.
- 6. Se repiten los pasos 4 y 5 hasta que se ha enviado todo el contenido del buffer.
-
- El proceso para la recepción de un mensaje es el siguiente:
- 1. CAN_OC dispara una interrupción por la recepción de un mensaje.
- 2. PDMCAN atiende la interrupción y accede a CAN_OC para extraer el mensaje.
- 3. PDMCAN accede a Memory Controller para depositar el mensaje en su buffer
- correspondiente.
- 4. Se repiten los pasos 1 2 y 3 hasta que se detecta mediante el identificador que se ha recibido
- un mensaje de tipo standalone o el último mensaje de un mensaje compuesto.
- 5. (a) PDMCAN envía una interrupción a LEON3 para indicar la llegada de un nuevo mensaje.
- La interrupción de este buffer debe estar habilitada.
- (b) LEON3 detectará el mensaje completo mediante polling.
- 6. LEON3 accede a PDMCAN para detectar qué buffers tienen mensajes pendientes.
- 7. LEON3 accede a Memory Controller para extraer los datos de los buffers. En caso de existir
- varios buffers con datos disponibles se atenderá el de mayor prioridad.
- 8. LEON3 accede a PDMCAN para actualizar la nueva posición del puntero del buffer, liberando
- la memoria leída.
- */
 void pi_free_can_irq_handler(void) {
 
 	msg_can_t msg_can;
@@ -402,38 +374,49 @@ void pi_free_can_irq_handler(void) {
 	uint8_t senderComponentID, type;
 	uint8_t rx_priority;
 
-	if (leon3_occan_drv_status_is_last_msg_transferred()) {
-		//Se mira la cola de la prioridad que usabamos antes
-		update_dequeued_elements(&tx_prio_queues[currentPrio], 1);
-		//Si la cola de esa prioridad está vacía, se quita la prioridad de la lista
-		if (queue_is_empty(&tx_prio_queues[currentPrio])) {
-			pi_free_can_drv_extract_tx_prio(currentPrio + 1);
+	if (!leon3_occan_drv_interrupt_is_rx_interruption()) {
+		if (first_access) {
+			first_access = 0;
 		}
+	}
 
+	//Envio de mensajes
+	if (!first_access) {
+		if (leon3_occan_drv_status_is_last_msg_transferred()) {
+			//Se mira la cola de la prioridad que usabamos antes
+			update_dequeued_elements(&tx_prio_queues[currentPrio], 1);
+			//Si la cola de esa prioridad está vacía, se quita la prioridad de la lista
+			if (queue_is_empty(&tx_prio_queues[currentPrio])) {
+				pi_free_can_drv_extract_tx_prio(currentPrio + 1);
+			}
+
+		}
 	}
 
 	// Miramos si tenemos algo que enviar y lo enviamos
 	//Que esta interrupción o la fuerza el envío de mensajes desde otra función del pi_drv o porque el buffer TX está vacío
-	if (!queue_is_empty(&tx_prio_queues[currentPrio])) {
+	if (!queue_is_empty(&tx_prio_queues[priority])) {
 		//Extraemos sin actualizar los elementos de la cola, solo se actualiza si se hace la interrupcion TX
 		queue_extract_without_update_element(&msg_can,
-				&tx_prio_queues[currentPrio], 0);
+				&tx_prio_queues[priority], 0);
 		leon3_occan_drv_send_message(&msg_can);
 
 		currentPrio = priority;
 	} else {
 		currentPrio = 0xFF;
 	}
+
+	//Recepción de mensajes
 	//Mirar si ha sido interrumpido por la llegada de un mensaje CAN
 	if (leon3_occan_drv_interrupt_is_rx_interruption()) {
 
 		//Cogemos el mensaje CAN
 		leon3_occan_drv_get_message(&msg_can);
 		//Recuperamos el ID
-		ID = (msg_can.id[0] << 21) & 0xFF;
-		ID = (msg_can.id[1] << 13) & 0xFF;
-		ID = (msg_can.id[2] << 5) & 0xFF;
-		ID = ((msg_can.id[3] << 3) & 0x1F);
+		ID = (msg_can.id[0] << 21);
+		ID |= (msg_can.id[1] << 13);
+		ID |= (msg_can.id[2] << 5);
+		ID |= (msg_can.id[3] << 3);
 
 		//Cogemos de la cabecera ID el id del componente
 		senderComponentID = (ID >> 16) & 0xFF;
