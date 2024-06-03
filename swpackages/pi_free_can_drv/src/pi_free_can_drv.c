@@ -237,7 +237,7 @@ int32_t pi_free_can_drv_read_message(uint8_t priority, uint16_t Mlength,
 		aux_ID = (can_msg.id[0] << 21) & 0xFF;
 		aux_ID = (can_msg.id[1] << 13) & 0xFF;
 		aux_ID = (can_msg.id[2] << 5) & 0xFF;
-		aux_ID = ((can_msg.id[3] << 3) & 0x1F);
+		aux_ID = ((can_msg.id[3] << 3) & 0x1F); //TODO Revisar el ID si es correcto
 
 		aux_DLC = can_msg.DLC;
 
@@ -247,7 +247,7 @@ int32_t pi_free_can_drv_read_message(uint8_t priority, uint16_t Mlength,
 		num_can_msg_read++;
 
 		//Si es primero de muchos, miramos tamaño de mensaje
-		while (type % 2 == 1) {
+		while (type == 3 || type == 1) {
 			queue_extract_without_update_element(&can_msg,
 					&rx_prio_queues[priority].rx_node_queue[senderComponentID],
 					num_can_msg_read);
@@ -341,9 +341,9 @@ uint32_t pi_free_get_canmsg_id(uint8_t *prio) {
 //gets the id of the most prioritary msg available
 	//and the priority of the msg
 
-	uint8_t i;
-	uint32_t id;
-	i = next_rx_queue[0].next; // cogemos la prioridad mas alta que tenga mensajes disponibles completos
+	uint8_t i = 0;
+	uint32_t id = 0;
+	i = next_rx_queue[0].next-1; // cogemos la prioridad mas alta que tenga mensajes disponibles completos
 	*prio = i;
 
 	queue_extract_msg_completed_without_update_elements(&rx_msg_completed[i],
@@ -374,12 +374,6 @@ void pi_free_can_irq_handler(void) {
 	uint8_t senderComponentID, type;
 	uint8_t rx_priority;
 
-	if (!leon3_occan_drv_interrupt_is_rx_interruption()) {
-		if (first_access) {
-			first_access = 0;
-		}
-	}
-
 	//Envio de mensajes
 	if (!first_access) {
 		if (leon3_occan_drv_status_is_last_msg_transferred()) {
@@ -387,9 +381,15 @@ void pi_free_can_irq_handler(void) {
 			update_dequeued_elements(&tx_prio_queues[currentPrio], 1);
 			//Si la cola de esa prioridad está vacía, se quita la prioridad de la lista
 			if (queue_is_empty(&tx_prio_queues[currentPrio])) {
-				pi_free_can_drv_extract_tx_prio(currentPrio + 1);
+				pi_free_can_drv_extract_tx_prio(currentPrio);
 			}
 
+		}
+	}
+
+	if (!leon3_occan_drv_interrupt_is_rx_interruption()) {
+		if (first_access) {
+			first_access = 0;
 		}
 	}
 
@@ -413,10 +413,11 @@ void pi_free_can_irq_handler(void) {
 		//Cogemos el mensaje CAN
 		leon3_occan_drv_get_message(&msg_can);
 		//Recuperamos el ID
-		ID = (msg_can.id[0] << 21);
+		ID = (msg_can.id[0] << 21); //TODO Revisar el ID si es correcto
 		ID |= (msg_can.id[1] << 13);
 		ID |= (msg_can.id[2] << 5);
 		ID |= (msg_can.id[3] << 3);
+		// posible solucion ID |= (msg_can.id[3] >> 3);
 
 		//Cogemos de la cabecera ID el id del componente
 		senderComponentID = (ID >> 16) & 0xFF;
@@ -436,8 +437,8 @@ void pi_free_can_irq_handler(void) {
 
 		//Metemos la nueva prioridad
 		pi_free_can_drv_insert_rx_prio(rx_priority + 1);
-		//Si el tipo es "10", es decir, stand alone o el último de una secuencia de mensajes, insertamos en la prioridad el ID para indicar que tenemos el mensaje completo
-		if (!type % 2 == 1) {
+		//Si el tipo es "10", es decir, stand alone o "00" que es el último de una secuencia de mensajes, insertamos en la prioridad el ID para indicar que tenemos el mensaje completo
+		if (type == 2 || type == 0) {
 			queue_insert_msg_completed_element(&rx_msg_completed[rx_priority],
 					ID);
 		}

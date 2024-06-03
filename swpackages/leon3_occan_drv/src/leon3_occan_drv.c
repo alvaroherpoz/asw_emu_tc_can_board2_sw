@@ -219,7 +219,7 @@ uint8_t leon3_occan_drv_get_message(msg_can_t *Msg){
 
 			if(((FI>>7) & 0x1))//Extended Frame Format
 			{
-				Msg->id[0] = pLEON3_CAN_REGS->ID[0];
+				Msg->id[0] = pLEON3_CAN_REGS->ID[0]; //TODO Revisar el ID si es correcto
 				Msg->id[1] = pLEON3_CAN_REGS->ID[1];
 				Msg->id[2] = pLEON3_CAN_REGS->ID[2];
 				Msg->id[3] = (pLEON3_CAN_REGS->ID[3] & 0xF8);

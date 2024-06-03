@@ -152,7 +152,7 @@ void update_dequeued_elements(can_queue_t *p_queue, uint16_t num){
 
 //Para msg de rx completos
 
-uint8_t queue_insert_msg_completed_element(rx_msg_completed_queue_t *p_queue, uint8_t data) {
+uint8_t queue_insert_msg_completed_element(rx_msg_completed_queue_t *p_queue, uint32_t data) {
 	uint8_t error = 1;
 	//Check pointer is valid && queue is not full
 	if (p_queue && (!queue_is_full_rx_msg_completed_queue(p_queue))) {
@@ -164,7 +164,7 @@ uint8_t queue_insert_msg_completed_element(rx_msg_completed_queue_t *p_queue, ui
 	return error;
 }
 
-uint8_t queue_extract_msg_completed_element(rx_msg_completed_queue_t *p_queue, uint8_t *p_data) {
+uint8_t queue_extract_msg_completed_element(rx_msg_completed_queue_t *p_queue, uint32_t *p_data) {
 	uint8_t error = 1;
 	//Check pointers are valid && queue is not empty
 	if (p_data && p_queue && (!queue_is_empty_rx_msg_completed_queue(p_queue))) {

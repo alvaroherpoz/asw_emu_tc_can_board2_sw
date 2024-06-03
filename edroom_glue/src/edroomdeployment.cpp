@@ -863,7 +863,7 @@ void CEDROOMSystemDeployment::StartComponents(){
  
 void CEDROOMSystemDeployment::Start(){
  
-	//Install CAN IRQ HANDLER, Vector 0x1C;
+	//Install CAN IRQ HANDLER, Vector 0x1D;
 
 	Pr_IRQManager::InstallIRQHandler(CEDROOMSystemCommSAP::RemoteCommIRQHandler, 1, 0x1D);
 
