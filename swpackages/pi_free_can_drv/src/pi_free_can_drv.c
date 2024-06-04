@@ -143,7 +143,7 @@ int32_t pi_free_can_drv_send_message(uint32_t ID, uint16_t DLC, uint8_t *Msg,
 		} else {
 			if (pending_Bytes > 8) // Primer mensaje
 					{
-				ID_msg = aux_ID | 0x11800000;
+				ID_msg = aux_ID | 0x11800000 | (priority << 25);
 				DLC_msg = 8; //8 bytes de DLC
 
 				queue_insert_elements_without_update_queued_elements(ID_msg,
@@ -157,7 +157,7 @@ int32_t pi_free_can_drv_send_message(uint32_t ID, uint16_t DLC, uint8_t *Msg,
 				flag = 0;
 			}
 			while (pending_Bytes > 8) {
-				ID_msg = aux_ID | 1 << 28 | 1 << 23; //Mensajes intermedios
+				ID_msg = aux_ID | 1 << 28 | 1 << 23 | (priority << 25); //Mensajes intermedios
 
 				queue_insert_elements_without_update_queued_elements(ID_msg,
 						&tx_prio_queues[priority], Msg, DLC_msg,
@@ -168,7 +168,7 @@ int32_t pi_free_can_drv_send_message(uint32_t ID, uint16_t DLC, uint8_t *Msg,
 				pending_Bytes = pending_Bytes - 8;
 			}
 
-			ID_msg = aux_ID | flag << 24 | pending_Bytes << 25; // Ultimo mensaje
+			ID_msg = aux_ID | flag << 24 | pending_Bytes << 25 | (priority << 25); // Ultimo mensaje
 
 			queue_insert_elements_without_update_queued_elements(ID_msg,
 					&tx_prio_queues[priority], Msg, pending_Bytes,
