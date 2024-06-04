@@ -234,10 +234,11 @@ int32_t pi_free_can_drv_read_message(uint8_t priority, uint16_t Mlength,
 
 		//Cogemos el ID del primer mensaje y el DLC
 		//Miramos DLC
-		aux_ID = (can_msg.id[0] << 21) & 0xFF;
-		aux_ID = (can_msg.id[1] << 13) & 0xFF;
-		aux_ID = (can_msg.id[2] << 5) & 0xFF;
-		aux_ID = ((can_msg.id[3] << 3) & 0x1F); //TODO Revisar el ID si es correcto
+		aux_ID = 0;
+		aux_ID |= (can_msg.id[0] << 21);
+		aux_ID |= (can_msg.id[1] << 13);
+		aux_ID |= (can_msg.id[2] << 5);
+		aux_ID |= ((can_msg.id[3] >> 3) & 0x1F);
 
 		aux_DLC = can_msg.DLC;
 
@@ -251,10 +252,11 @@ int32_t pi_free_can_drv_read_message(uint8_t priority, uint16_t Mlength,
 			queue_extract_without_update_element(&can_msg,
 					&rx_prio_queues[priority].rx_node_queue[senderComponentID],
 					num_can_msg_read);
-			aux_ID = (can_msg.id[0] << 21) & 0xFF;
-			aux_ID = (can_msg.id[1] << 13) & 0xFF;
-			aux_ID = (can_msg.id[2] << 5) & 0xFF;
-			aux_ID = ((can_msg.id[3] << 3) & 0x1F);
+			aux_ID = 0;
+			aux_ID |= (can_msg.id[0] << 21);
+			aux_ID |= (can_msg.id[1] << 13);
+			aux_ID |= (can_msg.id[2] << 5);
+			aux_ID |= ((can_msg.id[3] >> 3) & 0x1F);
 			aux_DLC = aux_DLC + can_msg.DLC;
 			type = (aux_ID & 0x01800000) >> 23;
 			num_can_msg_read++;
@@ -416,8 +418,7 @@ void pi_free_can_irq_handler(void) {
 		ID = (msg_can.id[0] << 21); //TODO Revisar el ID si es correcto
 		ID |= (msg_can.id[1] << 13);
 		ID |= (msg_can.id[2] << 5);
-		ID |= (msg_can.id[3] << 3);
-		// posible solucion ID |= (msg_can.id[3] >> 3);
+		ID |= ((msg_can.id[3] >> 3) & 0x1F);
 
 		//Cogemos de la cabecera ID el id del componente
 		senderComponentID = (ID >> 16) & 0xFF;
