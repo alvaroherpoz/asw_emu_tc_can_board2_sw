@@ -82,10 +82,11 @@ void GetMaxPrioMsgInfo(uint8_t* msgPrio, uint8_t* msgSenderCmp, uint8_t* msgSend
 //! IRQ Handler for the IRQ
 Pr_IRQHandler_RetType	CEDROOMSystemCommSAP::RemoteCommIRQHandler(void)
 {
+	uint8_t msg_completed = 0;
 	//IRQ Handler
-	pi_free_can_irq_handler();
+	msg_completed = pi_free_can_irq_handler();
 	
-	RemoteCommEventIRQ.Signal();
+	if(msg_completed) RemoteCommEventIRQ.Signal();
 	
 }
 
@@ -779,7 +780,8 @@ void CEDROOMRemoteCommSAP::Connect(CEDROOMInterface &inter1,
  
 void CEDROOMSystemCommSAP::SetRemoteConnections(){
 
-	edroom_can_drv_config();
+	//Init CAN Configuration
+	//edroom_can_drv_config();
 
 	m_remoteCommSAP.Connect(mp_ccbkgtcexec->TMChannelCtrl, mp_rcctm_channelctrl->TMChannelCtrl3, remote_connections[0],
 			C5BKGTCExec_PTMChannelCtrl__C3TM_ChannelCtrl_PTMChannelCtrl3,

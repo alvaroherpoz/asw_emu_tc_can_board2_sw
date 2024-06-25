@@ -143,7 +143,7 @@ int32_t pi_free_can_drv_send_message(uint32_t ID, uint16_t DLC, uint8_t *Msg,
 		} else {
 			if (pending_Bytes > 8) // Primer mensaje
 					{
-				ID_msg = aux_ID | 0x11800000 | (priority << 25);
+				ID_msg = aux_ID | 0x01800000 | (priority << 25);
 				DLC_msg = 8; //8 bytes de DLC
 
 				queue_insert_elements_without_update_queued_elements(ID_msg,
@@ -157,7 +157,7 @@ int32_t pi_free_can_drv_send_message(uint32_t ID, uint16_t DLC, uint8_t *Msg,
 				flag = 0;
 			}
 			while (pending_Bytes > 8) {
-				ID_msg = aux_ID | 1 << 28 | 1 << 23 | (priority << 25); //Mensajes intermedios
+				ID_msg = aux_ID | 1 << 23 | (priority << 25); //Mensajes intermedios
 
 				queue_insert_elements_without_update_queued_elements(ID_msg,
 						&tx_prio_queues[priority], Msg, DLC_msg,
@@ -168,7 +168,7 @@ int32_t pi_free_can_drv_send_message(uint32_t ID, uint16_t DLC, uint8_t *Msg,
 				pending_Bytes = pending_Bytes - 8;
 			}
 
-			ID_msg = aux_ID | flag << 24 | pending_Bytes << 25 | (priority << 25); // Ultimo mensaje
+			ID_msg = aux_ID | flag << 24 | (priority << 25); // Ultimo mensaje
 
 			queue_insert_elements_without_update_queued_elements(ID_msg,
 					&tx_prio_queues[priority], Msg, pending_Bytes,
@@ -224,7 +224,7 @@ int32_t pi_free_can_drv_read_message(uint8_t priority, uint16_t Mlength,
 				&rx_msg_completed[priority], &aux_ID, 0);
 
 		//Cogemos de la cabecera ID el id del componente
-		uint8_t senderComponentID = (aux_ID >> 16) & 0xFF;
+		uint8_t senderComponentID = (aux_ID >> 16) & 0x7F;
 
 		//Ahora, cogemos el primer mensaje de esa prioridad
 		//cogemos de la cola de mensajes RX del componente y su prioridad el ID
@@ -368,16 +368,17 @@ uint16_t pi_free_rx_status() {
 	return rx_status;
 }
 
-void pi_free_can_irq_handler(void) {
+uint8_t pi_free_can_irq_handler(void) {
 
 	msg_can_t msg_can;
 	uint8_t priority = next_tx_queue[0].next - 1;
 	uint32_t ID = 0;
 	uint8_t senderComponentID, type;
 	uint8_t rx_priority;
+	uint8_t msg_completed = 0;
 
 	//Envio de mensajes
-	if (!first_access) {
+	if (!first_access && currentPrio < 16) {
 		if (leon3_occan_drv_status_is_last_msg_transferred()) {
 			//Se mira la cola de la prioridad que usabamos antes
 			update_dequeued_elements(&tx_prio_queues[currentPrio], 1);
@@ -397,15 +398,17 @@ void pi_free_can_irq_handler(void) {
 
 	// Miramos si tenemos algo que enviar y lo enviamos
 	//Que esta interrupción o la fuerza el envío de mensajes desde otra función del pi_drv o porque el buffer TX está vacío
-	if (!queue_is_empty(&tx_prio_queues[priority])) {
-		//Extraemos sin actualizar los elementos de la cola, solo se actualiza si se hace la interrupcion TX
-		queue_extract_without_update_element(&msg_can,
-				&tx_prio_queues[priority], 0);
-		leon3_occan_drv_send_message(&msg_can);
+	if (priority < 16) {
+		if (!queue_is_empty(&tx_prio_queues[priority])) {
+			//Extraemos sin actualizar los elementos de la cola, solo se actualiza si se hace la interrupcion TX
+			queue_extract_without_update_element(&msg_can,
+					&tx_prio_queues[priority], 0);
+			leon3_occan_drv_send_message(&msg_can);
 
-		currentPrio = priority;
-	} else {
-		currentPrio = 0xFF;
+			currentPrio = priority;
+		} else {
+			currentPrio = 0xFF;
+		}
 	}
 
 	//Recepción de mensajes
@@ -421,32 +424,36 @@ void pi_free_can_irq_handler(void) {
 		ID |= ((msg_can.id[3] >> 3) & 0x1F);
 
 		//Cogemos de la cabecera ID el id del componente
-		senderComponentID = (ID >> 16) & 0xFF;
+		senderComponentID = (ID >> 16) & 0x7F;
 		//Cogemos el tipo del mensaje(primero de muchos, o único)
 		type = (ID & 0x01800000) >> 23;
 		//Cogemos la prioridad del mensaje
 		rx_priority = (ID & 0x1E000000) >> 25;
 
 		//Puntero a la cola del componente y prioridad del mismo
-		can_queue_t *p_queue;
-		p_queue = &rx_prio_queues[rx_priority].rx_node_queue[senderComponentID];
 
 		//Encolamos el mensaje
-		queue_insert_element(&msg_can, p_queue);
+		queue_insert_element(&msg_can, &rx_prio_queues[rx_priority].rx_node_queue[senderComponentID]);
 
 		//TODO Hacer Lock/Unlock?
 
-		//Metemos la nueva prioridad
-		pi_free_can_drv_insert_rx_prio(rx_priority + 1);
-		//Si el tipo es "10", es decir, stand alone o "00" que es el último de una secuencia de mensajes, insertamos en la prioridad el ID para indicar que tenemos el mensaje completo
-		if (type == 2 || type == 0) {
+		//Si el tipo es "10", es decir, stand alone o "11" que es el primero de una secuencia de mensajes, insertamos en la prioridad el ID para indicar que tenemos un mensaje
+		if (type == 2 || type == 3) {
 			queue_insert_msg_completed_element(&rx_msg_completed[rx_priority],
 					ID);
+
+		}
+		//Si el tipo es "10", es decir, stand alone o "00" que es el último de una secuencia de mensajes, indicamons mensaje completo
+		if (type == 2 || type == 0) {
+			//Metemos la nueva prioridad
+			pi_free_can_drv_insert_rx_prio(rx_priority + 1);
+			msg_completed = 1;
 		}
 		//Liberamos el buffer RX para recibir otros mensajes
 		leon3_occan_drv_command_free_receive_buffer();
 
 	}
+	return msg_completed;
 
 	//TODO Se tiene que limpiar la interrupcion?
 

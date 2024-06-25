@@ -130,7 +130,7 @@ uint8_t queue_extract_without_update_element(msg_can_t *can_msg, can_queue_t *p_
 	//Check pointers are valid && queue is not empty
 	if (can_msg && p_queue && (!queue_is_empty(p_queue))) {
 		int i;
-		uint16_t position = p_queue->head + pos;
+		uint16_t position = (p_queue->head + pos)% QUEUE_MAX_SIZE;
 		for (i = 0; i <= 3; i++) {
 			can_msg->id[i] = p_queue->data[position].id[i];
 		}

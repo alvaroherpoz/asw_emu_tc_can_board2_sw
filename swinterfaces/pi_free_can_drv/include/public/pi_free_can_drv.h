@@ -43,7 +43,7 @@ uint32_t pi_free_get_canmsg_id(uint8_t* prio);
 
 uint16_t pi_free_rx_status(void);
 
-void pi_free_can_irq_handler(void);
+uint8_t pi_free_can_irq_handler(void);
 
 #ifdef __cplusplus
 
